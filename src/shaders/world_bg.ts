@@ -6,6 +6,7 @@ uniform vec2 uResolution;
 uniform vec2 uShift;      // camera offset — nudged on each route change
 uniform float uSteps;     // per-device march budget (≤ MAX_STEPS) — perf tier
 uniform float uBright;    // glow brightness — dimmed off-home / below the fold
+uniform float uFocusY;    // vertical placement in uv units (+ = up) — phone hero gap
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONFIG  — a slow-turning volumetric KIFS fractal, lit in the site's amber/ember.
@@ -20,7 +21,10 @@ const float GRAIN     = 0.045;   // film grain — the "window" texture
 // it's pulled back toward centre and dimmed harder so foreground text stays
 // readable. (.x = portrait/mobile, .y = landscape/desktop)
 const vec2 DIM      = vec2(0.34, 0.62);   // overall brightness
-const vec2 OFFSET_X = vec2(0.14, 0.38);   // rightward shift (+ = right)
+// Rightward shift (+ = right). Portrait is a fraction of screen width, so the
+// structure stays centre-right on narrow phones instead of hanging off the
+// edge; landscape is in screen heights.
+const vec2 OFFSET_X = vec2(0.14, 0.38);
 
 // Palette — warm amber → ember, pulled from the site accent (--site-accent).
 const vec3 COL_HOT   = vec3(1.000, 0.820, 0.420);  // bright gold core
@@ -40,6 +44,11 @@ const vec3  RAYS        = vec3(0.30, 0.25, 0.55);
 // Orbit-trap data, written by map(), read for colouring.
 vec3 orbitTrap;
 
+// Field rotation for this frame. It depends only on uniforms, so main()
+// computes it once per pixel instead of map() redoing the sin/cos every step.
+mat2 fieldRotXZ;
+mat2 fieldRotXY;
+
 // High-quality, artifact-free spatial hash.
 float hash(vec2 p) {
     vec3 p3 = fract(vec3(p.xyx) * 0.1031);
@@ -54,9 +63,9 @@ mat2 rot(float a) {
 
 // Distance function: asymmetric KIFS fold + domain warp, smooth-merged into rays.
 float map(vec3 p) {
-    // Slow rotation of the whole field. uShift gently reorients on route changes.
-    p.xz *= rot(uTime * CAM_ROT_X + uShift.x * 0.02);
-    p.xy *= rot(uTime * CAM_ROT_Y + uShift.y * 0.02);
+    // Slow rotation of the whole field (see main()).
+    p.xz *= fieldRotXZ;
+    p.xy *= fieldRotXY;
 
     vec3 q = p;
     float scale = 0.26;
@@ -99,14 +108,20 @@ float map(vec3 p) {
 }
 
 void main() {
+    // Slow rotation of the whole field. uShift gently reorients on route changes.
+    fieldRotXZ = rot(uTime * CAM_ROT_X + uShift.x * 0.02);
+    fieldRotXY = rot(uTime * CAM_ROT_Y + uShift.y * 0.02);
+
     vec2 uv = (gl_FragCoord.xy - 0.5 * uResolution.xy) / uResolution.y;
 
     // 0 = portrait phone, 1 = wide desktop — drives framing + brightness.
-    float land    = smoothstep(0.85, 1.35, uResolution.x / uResolution.y);
-    float offsetX = mix(OFFSET_X.x, OFFSET_X.y, land);
+    float aspect  = uResolution.x / uResolution.y;
+    float land    = smoothstep(0.85, 1.35, aspect);
+    float offsetX = mix(OFFSET_X.x * aspect, OFFSET_X.y, land);
     float dim     = mix(DIM.x, DIM.y, land);
 
     uv.x -= offsetX;   // shift the view so the structure sits right of centre
+    uv.y -= uFocusY;   // and up/down onto the spot the page leaves free for it
 
     vec3 ro = vec3(0.0, 0.0, -4.5);
     vec3 rd = normalize(vec3(uv, 1.0));
