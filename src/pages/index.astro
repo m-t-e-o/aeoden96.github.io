@@ -20,6 +20,20 @@ const projects = (await getCollection("projects")).sort(
 // scales with length to keep the roll speed constant.
 const stackItems = Array.from({ length: Math.ceil(14 / stack.length) }, () => stack).flat();
 const stackDuration = `${stackItems.length * 3.2}s`;
+
+// The bio lights up word by word, like a bulb that doesn't quite want to
+// start. Each word gets a flicker pattern and a start delay; an inline script
+// re-rolls both on every load, so these build-time values are the no-JS
+// fallback.
+const bio =
+  "Full-stack software developer. I also made kreni.app, a live Zagreb " +
+  "transit map with nearly 5k users in its first month, featured in " +
+  "Večernji list. For fun, it's GPU graphics and compute, mostly shaders.";
+const bioWords = bio.split(" ").map((word, i) => ({
+  word,
+  flicker: i === 9 ? "c" : i % 5 === 2 ? "a" : "b",
+  delay: Math.round(80 + ((i * 263) % 640)),
+}));
 ---
 
 <!doctype html>
@@ -52,11 +66,22 @@ const stackDuration = `${stackItems.length * 3.2}s`;
         <div data-world-focus aria-hidden="true" class="h-[36svh] md:hidden"></div>
 
         <p id="hero-bio" class="text-base text-[#a89c85] md:mt-8 max-w-xl leading-relaxed">
-          Full-stack software developer. I also made kreni.app, a live Zagreb
-          transit map with nearly 5k users in its first month, featured in
-          Večernji list. For fun, it's GPU graphics and compute, mostly
-          shaders.
+          {bioWords.map(({ word, flicker, delay }) => (
+            <><span class="flicker-word" data-flicker={flicker} style={`--delay:${delay}ms`}>{word}</span>{" "}</>
+          ))}
         </p>
+        <script is:inline>
+          // Re-roll the flicker so each load lights up differently. Runs as
+          // the parser reaches it, before the first paint.
+          (() => {
+            const words = document.querySelectorAll("#hero-bio .flicker-word");
+            const stubborn = 1 + Math.floor(Math.random() * (words.length - 1));
+            words.forEach((el, i) => {
+              el.dataset.flicker = i === stubborn ? "c" : Math.random() < 0.2 ? "a" : "b";
+              el.style.setProperty("--delay", `${Math.round(60 + Math.random() * 700)}ms`);
+            });
+          })();
+        </script>
 
         <div class="flex flex-wrap gap-3 mt-10">
           <a href="/experiments" class="hud text-[11px] bg-[var(--site-accent)] text-[#0a0d14] font-bold px-4 py-2.5 rounded hover:bg-[#fbbf24] transition-colors">
@@ -208,17 +233,46 @@ const stackDuration = `${stackItems.length * 3.2}s`;
       </footer>
     </div>
     <style>
-      /* Gently fade the bio in. Done in CSS so it starts on first paint: the
-         bio is the largest element on mobile, and a JS-delayed fade from
-         opacity 0 held back LCP. */
-      #hero-bio {
-        animation: hero-bio-in 0.9s ease both;
+      /* Bio words come on like a slightly faulty bulb. Most just fade up; a
+         few waver once on the way, and one catches late. Each word glows
+         faintly amber while it lights, then cools to the body colour. The
+         wavers are stepped (no easing) so they read as current, not a fade.
+         It all runs in CSS from the first paint: the bio is the largest
+         element on mobile, and a JS-started animation would hold back LCP. */
+      .flicker-word {
+        animation:
+          var(--flicker) var(--delay) both,
+          word-cool var(--cool) ease-out var(--delay) both;
       }
-      @keyframes hero-bio-in {
+      .flicker-word[data-flicker="b"] { --flicker: word-fade 0.7s ease-out; --cool: 1.2s; }
+      .flicker-word[data-flicker="a"] { --flicker: flicker-a 1s steps(1, end); --cool: 1.5s; }
+      .flicker-word[data-flicker="c"] { --flicker: flicker-c 1.6s steps(1, end); --cool: 2.2s; }
+
+      @keyframes word-fade {
         from { opacity: 0; }
       }
+      /* One slow, shallow dip, then on. */
+      @keyframes flicker-a {
+        0%   { opacity: 0; }
+        20%  { opacity: 0.85; }
+        50%  { opacity: 0.6; }
+        75%, 100% { opacity: 1; }
+      }
+      /* The stubborn one: glows faintly, then catches late. */
+      @keyframes flicker-c {
+        0%   { opacity: 0; }
+        20%  { opacity: 0.3; }
+        55%  { opacity: 0.65; }
+        80%, 100% { opacity: 1; }
+      }
+      @keyframes word-cool {
+        from {
+          color: #e9b54f;
+          text-shadow: 0 0 8px rgba(245, 158, 11, 0.35);
+        }
+      }
       @media (prefers-reduced-motion: reduce) {
-        #hero-bio { animation: none; }
+        .flicker-word { animation: none; }
       }
 
       /* Stack marquee. The track holds two identical halves, so sliding it by
