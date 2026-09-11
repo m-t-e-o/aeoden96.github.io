@@ -5,6 +5,7 @@ import FormattedDate from "../components/FormattedDate.astro";
 import { SITE_TITLE, SITE_DESCRIPTION } from "../consts";
 import { getCollection } from "astro:content";
 import WorldBackground from "../components/WorldBackground.astro";
+import { stack, stackIcons } from "../stack";
 
 const experiments = (await getCollection("experiments")).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
@@ -13,6 +14,12 @@ const experiments = (await getCollection("experiments")).sort(
 const projects = (await getCollection("projects")).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
 ).slice(0, 2);
+
+// Each half of the marquee track must be wider than the viewport, so a short
+// list repeats (the repeats are hidden when motion is reduced). Duration
+// scales with length to keep the roll speed constant.
+const stackItems = Array.from({ length: Math.ceil(14 / stack.length) }, () => stack).flat();
+const stackDuration = `${stackItems.length * 3.2}s`;
 ---
 
 <!doctype html>
@@ -27,7 +34,7 @@ const projects = (await getCollection("projects")).sort(
       <Header />
 
       <!-- Hero -->
-      <section class="py-20 md:py-28">
+      <section class="pt-10 pb-20 md:py-28">
         <p class="hud accent-text text-[11px] mb-6 flex items-center gap-2.5">
           <span class="inline-block w-1.5 h-1.5 rounded-full bg-[var(--site-accent)] cursor-blink"></span>
           Zagreb, HR
@@ -37,15 +44,18 @@ const projects = (await getCollection("projects")).sort(
           <span class="text-[clamp(2.5rem,9vw,7rem)] accent-text block">ENGINEER</span>
         </h1>
         <p class="hud text-[11px] md:text-xs text-[#a89c85] mt-6">
-          React · Next.js · TypeScript · Across the stack
+          React&nbsp;· Next.js&nbsp;· TypeScript&nbsp;· WebGL&nbsp;· WebGPU&nbsp;· GLSL
         </p>
 
-        <p id="hero-bio" class="text-base text-[#a89c85] mt-8 max-w-xl leading-relaxed" style="opacity:0">
-          Frontend engineer with five years in React, Next.js and TypeScript.
-          I've led the frontend on products used daily by tens of thousands of
-          users — owning features from planning through to release — mentored
-          developers, and shipped my own product, kreni.app, a live Zagreb
-          transit tracker with 5–20k monthly active users.
+        <!-- Phone width: keep a window clear for the background graphic, which
+             centres itself on this gap (see WorldBackground). -->
+        <div data-world-focus aria-hidden="true" class="h-[36svh] md:hidden"></div>
+
+        <p id="hero-bio" class="text-base text-[#a89c85] md:mt-8 max-w-xl leading-relaxed">
+          Full-stack software developer. I also made kreni.app, a live Zagreb
+          transit map with nearly 5k users in its first month, featured in
+          Večernji list. For fun, it's GPU graphics and compute, mostly
+          shaders.
         </p>
 
         <div class="flex flex-wrap gap-3 mt-10">
@@ -64,12 +74,43 @@ const projects = (await getCollection("projects")).sort(
         </div>
       </section>
 
+      <!-- Stack -->
+      <section class="py-16 border-t border-[var(--warm-border)] fade-up">
+        <h2 class="hud text-xs text-[#ece4d3] flex items-center gap-2 mb-2">
+          <span class="accent-text">[01]</span> Stack
+        </h2>
+
+        <ul class="sr-only">
+          {stack.map((tech) => <li>{tech.name}</li>)}
+        </ul>
+        <!-- Each icon's path is defined once here; the marquee items <use> it. -->
+        <svg width="0" height="0" class="absolute" aria-hidden="true">
+          {Object.entries(stackIcons).map(([id, d]) => (
+            <symbol id={`stack-${id}`} viewBox="0 0 24 24"><path d={d} /></symbol>
+          ))}
+        </svg>
+        <div class="stack-marquee -mx-6 md:-mx-10 lg:-mx-16" aria-hidden="true">
+          <div class="stack-track" style={`--roll-duration: ${stackDuration}`}>
+            {[0, 1].map(() => (
+              <div class="stack-group">
+                {stackItems.map((tech, i) => (
+                  <span class:list={["stack-item", { "is-repeat": i >= stack.length }]}>
+                    <svg class="stack-icon"><use href={`#stack-${tech.icon}`} /></svg>
+                    {tech.name}
+                  </span>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <!-- Experiments -->
       {experiments.length > 0 && (
         <section class="py-16 border-t border-[var(--warm-border)] fade-up">
           <div class="flex items-baseline justify-between mb-8">
             <h2 class="hud text-xs text-[#ece4d3] flex items-center gap-2">
-              <span class="accent-text">[01]</span> Experiments
+              <span class="accent-text">[02]</span> Experiments
             </h2>
             <a href="/experiments" class="hud text-[11px] accent-text hover:text-white transition-colors">
               All experiments →
@@ -115,7 +156,7 @@ const projects = (await getCollection("projects")).sort(
         <section class="py-16 border-t border-[var(--warm-border)] fade-up">
           <div class="flex items-baseline justify-between mb-8">
             <h2 class="hud text-xs text-[#ece4d3] flex items-center gap-2">
-              <span class="accent-text">[02]</span> Selected Work
+              <span class="accent-text">[03]</span> Selected Work
             </h2>
             <a href="/projects" class="hud text-[11px] accent-text hover:text-white transition-colors">
               All projects →
@@ -144,19 +185,16 @@ const projects = (await getCollection("projects")).sort(
         </section>
       )}
 
-      <!-- Ready to collaborate -->
+      <!-- Contact -->
       <section class="py-16 border-t border-[var(--warm-border)] fade-up">
-        <p class="hud accent-text text-[11px] mb-4">[03] Contact</p>
+        <p class="hud accent-text text-[11px] mb-4">[04] Contact</p>
         <h2 class="font-display text-2xl md:text-3xl text-white mb-4 tracking-[0.04em]">
-          Ready to <span class="accent-text">collaborate</span>
+          Got a <span class="accent-text">project</span>?
         </h2>
         <p class="text-base text-[#a89c85] max-w-2xl leading-relaxed">
-          I take features across the whole stack — from the
-          <span class="accent-text-dim"> API</span> to the
-          <span class="accent-text-dim"> UI</span> — and own
-          <span class="accent-text-dim"> getting them released</span>.
-          Whether you need someone to lead a frontend, ship a product end to
-          end, or bring an idea over the line — let's talk.
+          I do <span class="accent-text-dim">full-stack</span> work for a living
+          and <span class="accent-text-dim">GPU</span> work because I enjoy it.
+          If you need help with either, email me.
         </p>
         <a href="mailto:contact@mteo.dev" class="hud text-[11px] inline-flex items-center gap-2 mt-8 bg-[var(--site-accent)] text-[#0a0d14] font-bold px-4 py-2.5 rounded hover:bg-[#fbbf24] transition-colors">
           contact@mteo.dev →
@@ -169,18 +207,91 @@ const projects = (await getCollection("projects")).sort(
         <p>© {new Date().getFullYear()} mteo.dev</p>
       </footer>
     </div>
+    <style>
+      /* Gently fade the bio in. Done in CSS so it starts on first paint: the
+         bio is the largest element on mobile, and a JS-delayed fade from
+         opacity 0 held back LCP. */
+      #hero-bio {
+        animation: hero-bio-in 0.9s ease both;
+      }
+      @keyframes hero-bio-in {
+        from { opacity: 0; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #hero-bio { animation: none; }
+      }
+
+      /* Stack marquee. The track holds two identical halves, so sliding it by
+         -50% loops seamlessly. Only the transform animates, so it runs on the
+         compositor without repainting, leaving the GPU budget to the
+         background shader. */
+      .stack-marquee {
+        --item-gap: 40px;
+        overflow: hidden;
+        padding-block: 24px;      /* room for the text halo before the clip */
+        -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+        mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+      }
+      .stack-track {
+        display: flex;
+        width: max-content;
+        animation: stack-roll var(--roll-duration) linear infinite;
+      }
+      .stack-marquee:hover .stack-track { animation-play-state: paused; }
+      .stack-group {
+        display: flex;
+        gap: var(--item-gap);
+        padding-right: var(--item-gap);   /* so the seam between halves matches */
+      }
+      @keyframes stack-roll {
+        to { transform: translateX(-50%); }
+      }
+      @media (min-width: 768px) {
+        .stack-marquee { --item-gap: 56px; }
+      }
+
+      .stack-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        font-family: var(--font-display);
+        font-size: 15px;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+        line-height: 1;
+        white-space: nowrap;
+        color: rgba(245, 158, 11, 0.6);   /* quiet amber; full on hover */
+        /* A layered dark halo keeps the text readable where the fractal is
+           still bright. Shadows rasterise once with the moving layer, not per
+           frame. */
+        text-shadow: 0 0 2px rgba(10, 13, 20, 0.95), 0 0 10px rgba(10, 13, 20, 0.9), 0 0 26px rgba(10, 13, 20, 0.85);
+        transition: color 0.2s ease;
+      }
+      .stack-item:hover { color: #fbbf24; }
+      .stack-icon {
+        flex: none;
+        width: 18px;
+        height: 18px;
+        fill: currentColor;
+        filter: drop-shadow(0 0 2px rgba(10, 13, 20, 0.95)) drop-shadow(0 0 8px rgba(10, 13, 20, 0.9));
+      }
+      @media (min-width: 768px) {
+        .stack-item { font-size: 17px; }
+        .stack-icon { width: 19px; height: 19px; }
+      }
+
+      /* Reduced motion: a still, wrapped list with each item once. */
+      @media (prefers-reduced-motion: reduce) {
+        .stack-marquee { margin-inline: 0; padding-block: 16px; -webkit-mask-image: none; mask-image: none; }
+        .stack-track { animation: none; width: auto; }
+        .stack-group { flex-wrap: wrap; gap: 16px 32px; padding-right: 0; }
+        .stack-group + .stack-group,
+        .stack-item.is-repeat { display: none; }
+      }
+    </style>
     <script>
       // Runs on first load AND after every client-side navigation.
       document.addEventListener('astro:page-load', () => {
-        // Gently fade the bio in once the hero has settled.
-        const bioEl = document.getElementById('hero-bio');
-        setTimeout(() => {
-          if (bioEl) {
-            bioEl.style.transition = 'opacity 0.9s ease';
-            bioEl.style.opacity = '1';
-          }
-        }, 450);
-
         // Scroll fade-up via IntersectionObserver
         const observer = new IntersectionObserver((entries) => {
           entries.forEach(e => {

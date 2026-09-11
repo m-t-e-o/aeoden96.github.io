@@ -3,4 +3,4 @@
 
 export const SITE_TITLE = "Mateo | Software Engineer & Frontend Developer";
 export const SITE_DESCRIPTION =
-  "I'm a software engineer and frontend developer with a passion for building user-friendly and efficient web applications.";
+  "Frontend engineer in Zagreb. I built kreni.app, a live transit map nearly 5k people used in its first month, and I make WebGL shader experiments.";
