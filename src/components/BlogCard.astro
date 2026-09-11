@@ -15,15 +15,10 @@ const { url, title, pubDate, description, tags, isFeature = false } = Astro.prop
 
 <a
   href={url}
-  class={`group relative block surface hover:bg-[rgba(28,21,12,0.55)] transition-colors duration-500 p-6 flex flex-col justify-between rounded-lg ${isFeature ? "md:col-span-2" : ""}`}
+  class={`group surface hud-card hover-accent-border transition-colors p-6 flex flex-col justify-between rounded-lg ${isFeature ? "md:col-span-2" : ""}`}
 >
-  <span class="absolute top-0 left-0 w-full h-[1px] bg-[#f59e0b] scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left ease-out rounded-tl-lg rounded-tr-lg"></span>
-  <span class="absolute bottom-0 right-0 w-full h-[1px] bg-[#f59e0b] scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-right ease-out rounded-bl-lg rounded-br-lg"></span>
-  <span class="absolute top-0 right-0 w-[1px] h-full bg-[#f59e0b] scale-y-0 group-hover:scale-y-100 transition-transform duration-500 origin-top ease-out"></span>
-  <span class="absolute bottom-0 left-0 w-[1px] h-full bg-[#f59e0b] scale-y-0 group-hover:scale-y-100 transition-transform duration-500 origin-bottom ease-out"></span>
-
   <div>
-    <h2 class="font-display text-[#ece4d3] group-hover:text-white transition-colors duration-300 text-2xl tracking-wide mb-2">
+    <h2 class="font-display text-[#ece4d3] text-2xl tracking-wide mb-2">
       {title}
     </h2>
     <p class="hud text-[#6f6757] text-[10px] mb-4">
