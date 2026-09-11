@@ -9,7 +9,11 @@
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
+    /* The large viewport (mobile URL bar collapsed), so the canvas covers the
+       screen however far the bar has slid and never resizes mid-scroll, which
+       would re-render and rescale the graphic. 100vh is the fallback. */
+    height: 100vh;
+    height: 100lvh;
     z-index: 0;
     pointer-events: none;
     display: block;

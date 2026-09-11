@@ -178,7 +178,12 @@ mark:hover {
    just above the (navy-cleared) canvas; the dot grid layers on top. */
 .edge-glow {
   position: fixed;
+  /* Large-viewport height, like the WebGL canvas: `inset: 0` alone tracks the
+     mobile URL bar and leaves a bare strip at the bottom as it collapses.
+     With top, bottom and height all set, bottom is ignored; browsers without
+     lvh drop the height and fall back to inset: 0. */
   inset: 0;
+  height: 100lvh;
   z-index: 0;
   pointer-events: none;
   background: radial-gradient(115% 115% at 50% 50%, transparent 60%, rgba(245, 158, 11, 0.11) 100%);
@@ -189,6 +194,7 @@ mark:hover {
 .grid-dot-overlay {
   position: fixed;
   inset: 0;
+  height: 100lvh;   /* large-viewport height, as .edge-glow */
   z-index: 1;
   pointer-events: none;
   background-image:
